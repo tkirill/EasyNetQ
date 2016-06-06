@@ -99,7 +99,7 @@ namespace EasyNetQ
             return PublishAsync(message, c => c.WithTopic(topic));
         }
 
-        public virtual async Task PublishAsync<T>(T message, Action<IPublishConfiguration> configure) where T : class
+        public virtual Task PublishAsync<T>(T message, Action<IPublishConfiguration> configure) where T : class
         {
             Preconditions.CheckNotNull(message, "message");
             Preconditions.CheckNotNull(configure, "configure");
@@ -120,8 +120,12 @@ namespace EasyNetQ
             if (configuration.Expires != null)
                 easyNetQMessage.Properties.Expiration = configuration.Expires.ToString();
 
-            var exchange = await publishExchangeDeclareStrategy.DeclareExchangeAsync(advancedBus, messageType, ExchangeType.Topic).ConfigureAwait(false);
-            await advancedBus.PublishAsync(exchange, configuration.Topic, false, easyNetQMessage).ConfigureAwait(false);
+            Func<Task> func = async () =>
+            {
+                var exchange = await publishExchangeDeclareStrategy.DeclareExchangeAsync(advancedBus, messageType, ExchangeType.Topic).ConfigureAwait(false);
+                await advancedBus.PublishAsync(exchange, configuration.Topic, false, easyNetQMessage).ConfigureAwait(false);
+            };
+            return func();
         }
 
         public virtual ISubscriptionResult Subscribe<T>(string subscriptionId, Action<T> onMessage) where T : class

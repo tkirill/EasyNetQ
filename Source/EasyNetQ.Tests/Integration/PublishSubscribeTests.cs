@@ -279,6 +279,18 @@ namespace EasyNetQ.Tests.Integration
 
             testLocalBus.Dispose();
         }
+
+        // The test verifies that argument check is performed even without await
+        [Test, Explicit("Needs a Rabbit instance on localhost to work")]
+        public void Should_throw_ArgumentNullException_immediately()
+        {
+            using (var testLocalBus = RabbitHutch.CreateBus("host=localhost;prefetchcount=1"))
+            {
+                Assert.Throws<ArgumentNullException>(() => testLocalBus.PublishAsync(default(MyMessage)));
+                Assert.Throws<ArgumentNullException>(() => testLocalBus.PublishAsync(default(MyMessage), "publishNullCheck"));
+                Assert.Throws<ArgumentNullException>(() => testLocalBus.PublishAsync(default(MyMessage), c => {}));
+            }
+        }
     }
 }
 
